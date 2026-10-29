@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Transcriber – {{ job.filename }}{% endblock %}
+{% block content %}
+
+<p><a href="/">← Übersicht</a></p>
+<h2>{{ job.filename }}</h2>
+<p>Status: <span class="badge {{ job.status }}">{{ job.status }}</span></p>
+
+{% if job.status in ['queued', 'processing'] %}
+  <section class="card">
+    <p class="muted">Die Datei wird transkribiert. Diese Seite aktualisiert sich automatisch, sobald das Ergebnis vorliegt.</p>
+    <div class="spinner"></div>
+  </section>
+  <script>
+    setInterval(async () => {
+      const res = await fetch('/api/transcriptions/{{ job.id }}');
+      const j = await res.json();
+      if (j.status === 'done' || j.status === 'error') location.reload();
+    }, 3000);
+  </script>
+
+{% elif job.status == 'error' %}
+  <section class="card error-box">
+    <h3>Fehler</h3>
+    <pre>{{ job.error_message }}</pre>
+  </section>
+
+{% else %}
+  <section class="card">
+    <div class="meta">
+      {% if transcript.metadata %}
+        <span>Modell: {{ transcript.metadata.model }}</span>
+        <span>Sprache: {{ transcript.metadata.language_detected or transcript.metadata.language_requested }}</span>
+        {% if transcript.metadata.duration_secs %}<span>Länge: {{ transcript.metadata.duration_secs | mmss }}</span>{% endif %}
+      {% endif %}
+    </div>
+    <div class="downloads">
+      <a href="/api/transcriptions/{{ job.id }}/result?format=txt&download=1">TXT</a>
+      <a href="/api/transcriptions/{{ job.id }}/result?format=json&download=1">JSON</a>
+      <a href="/api/transcriptions/{{ job.id }}/result?format=srt&download=1">SRT</a>
+      <a href="/api/transcriptions/{{ job.id }}/result?format=vtt&download=1">VTT</a>
+    </div>
+  </section>
+
+  <section class="card">
+    <h3>Sprecher benennen</h3>
+    <form action="/ui/jobs/{{ job.id }}/speakers" method="post" class="speakers">
+      {% for sp in speakers %}
+        <label>
+          <span class="dot c{{ sp.color_idx }}"></span>
+          <input type="text" name="name_{{ sp.id }}" value="{{ sp.name }}">
+        </label>
+      {% endfor %}
+      <button type="submit">Übernehmen</button>
+    </form>
+  </section>
+
+  <section class="card transcript">
+    {% for seg in segments %}
+      <div class="turn c{{ seg.color_idx }}">
+        <div class="turn-head"><span class="who">{{ seg.speaker }}</span><span class="ts">{{ seg.start | mmss }}</span></div>
+        <div class="turn-text">{{ seg.text }}</div>
+      </div>
+    {% endfor %}
+  </section>
+
+  <form action="/ui/jobs/{{ job.id }}/delete" method="post" onsubmit="return confirm('Diesen Job und alle Ergebnisdateien löschen?');">
+    <button type="submit" class="danger">Job löschen</button>
+  </form>
+{% endif %}
+{% endblock %}

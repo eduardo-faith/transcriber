@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Transcriber – Übersicht{% endblock %}
+{% block content %}
+
+<section class="card">
+  <h2>Neue Transkription</h2>
+  <form action="/ui/upload" method="post" enctype="multipart/form-data" class="upload-form">
+    <label>
+      Audiodatei
+      <input type="file" name="file" accept="audio/*,video/*" required>
+    </label>
+    <div class="row">
+      <label>
+        Sprache
+        <select name="language">
+          <option value="deu" {% if default_language == 'deu' %}selected{% endif %}>Deutsch</option>
+          <option value="auto">Automatisch erkennen</option>
+          <option value="eng">Englisch</option>
+          <option value="fra">Französisch</option>
+          <option value="spa">Spanisch</option>
+          <option value="ita">Italienisch</option>
+          <option value="nld">Niederländisch</option>
+        </select>
+      </label>
+      <label>
+        Sprecheranzahl <span class="muted">(leer = automatisch)</span>
+        <input type="number" name="num_speakers" min="1" max="32" placeholder="auto">
+      </label>
+    </div>
+    <button type="submit">Transkribieren</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Jobs</h2>
+  <table class="jobs">
+    <thead>
+      <tr><th>Datei</th><th>Status</th><th>Dauer</th><th>Erstellt</th></tr>
+    </thead>
+    <tbody id="jobs">
+      {% for j in jobs %}
+      <tr>
+        <td><a href="/jobs/{{ j.id }}">{{ j.filename }}</a></td>
+        <td><span class="badge {{ j.status }}">{{ j.status }}</span></td>
+        <td>{{ (j.duration_secs | mmss) if j.duration_secs else '–' }}</td>
+        <td>{{ j.created_at | int }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="muted">Noch keine Jobs.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<script>
+  const STATUS = {queued:'In Warteschlange', processing:'Wird verarbeitet…', done:'Fertig', error:'Fehler'};
+  function dur(s){ if(!s) return '–'; s=Math.round(s); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')+' min'; }
+  async function refresh(){
+    try{
+      const res = await fetch('/api/transcriptions');
+      const jobs = await res.json();
+      const tbody = document.getElementById('jobs');
+      tbody.innerHTML = jobs.length ? jobs.map(j => `
+        <tr>
+          <td><a href="/jobs/${j.id}">${j.filename}</a></td>
+          <td><span class="badge ${j.status}">${STATUS[j.status]||j.status}</span></td>
+          <td>${dur(j.duration_secs)}</td>
+          <td>${new Date(j.created_at*1000).toLocaleString('de-DE')}</td>
+        </tr>`).join('') : '<tr><td colspan="4" class="muted">Noch keine Jobs.</td></tr>';
+    }catch(e){}
+  }
+  refresh();
+  setInterval(refresh, 4000);
+</script>
+{% endblock %}

@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Daten / lokale Konfiguration
+/srv/
+data/
+*.db
+*.db-wal
+*.db-shm
+.env
+
+# Editor/OS
+.DS_Store
+.idea/
+.vscode/
