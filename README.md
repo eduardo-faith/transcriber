@@ -4,23 +4,27 @@ Selbst gehostete App zur **Gesprächstranskription mit Sprecherzuordnung**.
 Audiodatei hochladen → ElevenLabs Speech-to-Text (Scribe v2, Diarisierung) →
 Transkript mit zugeordneten Sprechern, abrufbar über **Web-Oberfläche** und **REST-API**.
 
-Gedacht für einen Debian-LXC auf Proxmox, Betrieb **nur im LAN** (keine Authentifizierung).
+Gedacht für einen Debian-13-LXC auf Proxmox, Betrieb **nur im LAN** (keine Authentifizierung).
 
-## Installation auf Proxmox (eine Zeile)
+## Installation
 
-Auf dem **Proxmox-Host** ausführen – legt einen Debian-12-LXC an und installiert alles:
+### 1. Debian-13-LXC anlegen (Proxmox VE Community Scripts)
+
+Lege dir auf dem Proxmox-Host einen **Debian-13**-LXC an, z. B. mit den
+[Proxmox VE Community Scripts](https://community-scripts.github.io/ProxmoxVE/)
+(Kategorie *Operating System* → **Debian**; beim Erstellen Debian 13 wählen).
+Empfehlung: ≥ 2 vCPU, 2 GB RAM, 8 GB Disk.
+
+### 2. App im Container installieren
+
+In der Konsole/SSH des LXC als `root`:
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/eduardo-faith/transcriber/main/ct/transcriber.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/eduardo-faith/transcriber/main/install/transcriber-install.sh)"
 ```
 
-Das Skript fragt den ElevenLabs-API-Key ab und zeigt am Ende die URL `http://<container-ip>:8000`.
-
-Anpassbar durch vorheriges Exportieren von Variablen, z. B.:
-
-```bash
-CORES=4 RAM=4096 DISK=16 bash -c "$(curl -fsSL .../ct/transcriber.sh)"
-```
+Das Skript installiert die Abhängigkeiten, fragt den **ElevenLabs-API-Key** ab,
+richtet den systemd-Dienst ein und zeigt am Ende die URL `http://<container-ip>:8000`.
 
 ## Aktualisieren
 
@@ -30,7 +34,8 @@ Im Container einfach:
 update
 ```
 
-(holt die neueste Version, installiert Abhängigkeiten, startet den Dienst neu). Vom Host aus: `pct exec <CTID> -- update`.
+Das aktualisiert **Debian-Pakete und die App**, installiert Abhängigkeiten neu und
+startet den Dienst neu. Vom Host aus: `pct exec <CTID> -- update`.
 
 ## Nutzung
 
@@ -60,6 +65,7 @@ curl -F "file=@gespraech.mp3" -F "language=deu" -F "num_speakers=2" \
 
 Über `/etc/transcriber.env` (siehe `.env.example`): API-Key, Datenpfad, Modell,
 Standardsprache, Audio-Löschung nach Transkription, Upload-Limit, Timeout, Parallelität.
+Nach Änderungen: `systemctl restart transcriber`.
 
 ## Lokal starten (Entwicklung)
 
