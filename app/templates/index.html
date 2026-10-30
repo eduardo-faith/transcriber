@@ -33,23 +33,25 @@
 
 <section class="card">
   <h2>Jobs</h2>
-  <table class="jobs">
-    <thead>
-      <tr><th>Datei</th><th>Status</th><th>Dauer</th><th>Erstellt</th></tr>
-    </thead>
-    <tbody id="jobs">
-      {% for j in jobs %}
-      <tr>
-        <td><a href="/jobs/{{ j.id }}">{{ j.filename }}</a></td>
-        <td><span class="badge {{ j.status }}">{{ j.status }}</span></td>
-        <td>{{ (j.duration_secs | mmss) if j.duration_secs else '–' }}</td>
-        <td>{{ j.created_at | int }}</td>
-      </tr>
-      {% else %}
-      <tr><td colspan="4" class="muted">Noch keine Jobs.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="table-wrap">
+    <table class="jobs">
+      <thead>
+        <tr><th>Datei</th><th>Status</th><th>Dauer</th><th>Erstellt</th></tr>
+      </thead>
+      <tbody id="jobs">
+        {% for j in jobs %}
+        <tr>
+          <td><a href="/jobs/{{ j.id }}">{{ j.filename }}</a></td>
+          <td><span class="badge {{ j.status }}">{{ j.status }}</span></td>
+          <td>{{ (j.duration_secs | mmss) if j.duration_secs else '–' }}</td>
+          <td>{{ j.created_at | int }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="muted">Noch keine Jobs.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </section>
 
 <script>
