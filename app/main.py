@@ -100,9 +100,9 @@ def _require_job(job_id):
 @app.get("/")
 def index(request: Request):
     return templates.TemplateResponse(
+        request,
         "index.html",
         {
-            "request": request,
             "jobs": db.list_jobs(),
             "default_language": config.DEFAULT_LANGUAGE,
             "version": __version__,
@@ -140,9 +140,9 @@ def job_page(request: Request, job_id: str):
         ]
         transcript = data
     return templates.TemplateResponse(
+        request,
         "job.html",
         {
-            "request": request,
             "job": job,
             "transcript": transcript,
             "segments": segments,
