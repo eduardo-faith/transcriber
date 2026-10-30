@@ -27,7 +27,12 @@ else
   echo ">>> App-Update: $CURRENT -> $NEW"
 fi
 
-"$APP_DIR/.venv/bin/pip" install -q --upgrade pip
+if [ ! -x "$APP_DIR/.venv/bin/pip" ]; then
+  echo ">>> venv ohne pip gefunden, bootstrappe neu…"
+  curl -fsSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
+  "$APP_DIR/.venv/bin/python" /tmp/get-pip.py -q
+  rm -f /tmp/get-pip.py
+fi
 "$APP_DIR/.venv/bin/pip" install -q -r "$APP_DIR/requirements.txt"
 chown -R transcriber:transcriber "$APP_DIR"
 

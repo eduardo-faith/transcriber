@@ -11,7 +11,10 @@ SERVICE_FILE="/etc/systemd/system/transcriber.service"
 echo ">>> Pakete installieren…"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
-apt-get install -y -qq python3 python3-venv python3-pip ffmpeg git curl >/dev/null
+# python3-pip bewusst ausgelassen: dessen Abhängigkeiten (python3-wheel u.a.) sind auf
+# manchen Debian-13-Container-Images nicht auflösbar. pip wird stattdessen unten direkt
+# in der venv via get-pip.py installiert, unabhängig vom System-apt-Zustand.
+apt-get install -y -qq python3 python3-venv ffmpeg git curl >/dev/null
 
 id -u transcriber &>/dev/null || useradd --system --home "$APP_DIR" --shell /usr/sbin/nologin transcriber
 
@@ -24,8 +27,10 @@ fi
 git config --system --add safe.directory "$APP_DIR"
 
 echo ">>> Python-Umgebung einrichten…"
-python3 -m venv "$APP_DIR/.venv"
-"$APP_DIR/.venv/bin/pip" install --upgrade pip -q
+python3 -m venv --without-pip "$APP_DIR/.venv"
+curl -fsSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
+"$APP_DIR/.venv/bin/python" /tmp/get-pip.py -q
+rm -f /tmp/get-pip.py
 "$APP_DIR/.venv/bin/pip" install -q -r "$APP_DIR/requirements.txt"
 
 mkdir -p "$DATA_DIR/uploads" "$DATA_DIR/results"
